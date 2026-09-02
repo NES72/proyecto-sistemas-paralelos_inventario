@@ -12,7 +12,9 @@
   "description": "",
   "dependencies": {
     "@prisma/client": "^7.10.0",
+    "@prisma/orm-postgres": "^8.0.0-rc.8",
     "express": "^5.2.1",
-    "prisma": "^8.0.0-rc.12"
+    "prisma": "^8.0.0-rc.12",
+    "temporal-polyfill": "^1.0.4"
   }
 }
