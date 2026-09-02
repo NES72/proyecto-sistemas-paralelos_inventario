@@ -94,13 +94,16 @@ async function main() {
     categoriaId: herramientas.id
   });
 
-  await MovimientoInventario.createAll([
-    { tipo: 'ENTRADA', cantidad: 20, motivo: 'Carga inicial del inventario', productoId: teclado.id },
-    { tipo: 'ENTRADA', cantidad: 30, motivo: 'Carga inicial del inventario', productoId: mouse.id },
-    { tipo: 'ENTRADA', cantidad: 50, motivo: 'Carga inicial del inventario', productoId: cuaderno.id },
-    { tipo: 'ENTRADA', cantidad: 8, motivo: 'Carga inicial del inventario', productoId: martillo.id },
-    { tipo: 'ENTRADA', cantidad: 12, motivo: 'Carga inicial del inventario', productoId: destornillador.id }
-  ]);
+  const yaExistenMovimientos = await MovimientoInventario.first();
+  if (!yaExistenMovimientos) {
+    await MovimientoInventario.createAll([
+      { tipo: 'ENTRADA', cantidad: 20, motivo: 'Carga inicial del inventario', productoId: teclado.id },
+      { tipo: 'ENTRADA', cantidad: 30, motivo: 'Carga inicial del inventario', productoId: mouse.id },
+      { tipo: 'ENTRADA', cantidad: 50, motivo: 'Carga inicial del inventario', productoId: cuaderno.id },
+      { tipo: 'ENTRADA', cantidad: 8, motivo: 'Carga inicial del inventario', productoId: martillo.id },
+      { tipo: 'ENTRADA', cantidad: 12, motivo: 'Carga inicial del inventario', productoId: destornillador.id }
+    ]);
+  }
 
   console.log('Categorías creadas correctamente.');
   console.log('Productos creados correctamente.');

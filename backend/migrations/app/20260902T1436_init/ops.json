@@ -1,0 +1,382 @@
+[
+  {
+    "id": "schema.public",
+    "label": "Create schema \"public\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres"
+    },
+    "precheck": [],
+    "execute": [
+      {
+        "description": "Create schema \"public\"",
+        "sql": "CREATE SCHEMA IF NOT EXISTS \"public\"",
+        "params": []
+      }
+    ],
+    "postcheck": []
+  },
+  {
+    "id": "table.categoria",
+    "label": "Create table \"categoria\"",
+    "summary": "Creates table \"categoria\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "categoria"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"categoria\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"categoria\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"categoria\"",
+        "sql": "CREATE TABLE \"public\".\"categoria\" (\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"descripcion\" text,\n  \"estado\" bool DEFAULT true NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"nombre\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"categoria\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"categoria\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.movimientoInventario",
+    "label": "Create table \"movimientoInventario\"",
+    "summary": "Creates table \"movimientoInventario\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "movimientoInventario"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"movimientoInventario\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"movimientoInventario\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"movimientoInventario\"",
+        "sql": "CREATE TABLE \"public\".\"movimientoInventario\" (\n  \"cantidad\" int4 NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"motivo\" text,\n  \"productoId\" int4 NOT NULL,\n  \"tipo\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"movimientoInventario_tipo_check_3401cc7a\" CHECK (\"tipo\" IN ('ENTRADA', 'SALIDA', 'AJUSTE'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"movimientoInventario\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"movimientoInventario\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.producto",
+    "label": "Create table \"producto\"",
+    "summary": "Creates table \"producto\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "producto"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"producto\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"producto\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"producto\"",
+        "sql": "CREATE TABLE \"public\".\"producto\" (\n  \"categoriaId\" int4 NOT NULL,\n  \"codigo\" text NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"descripcion\" text,\n  \"estado\" bool DEFAULT true NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"nombre\" text NOT NULL,\n  \"precio\" numeric NOT NULL,\n  \"stock\" int4 DEFAULT 0 NOT NULL,\n  \"stockMinimo\" int4 DEFAULT 5 NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"producto\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"producto\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.categoria.categoria_nombre_key",
+    "label": "Add unique constraint on \"categoria\" (nombre)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "categoria_nombre_key",
+        "table": "categoria"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"categoria_nombre_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "categoria_nombre_key",
+          "public",
+          "\"public\".\"categoria\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"categoria_nombre_key\"",
+        "sql": "ALTER TABLE \"public\".\"categoria\" ADD CONSTRAINT \"categoria_nombre_key\" UNIQUE (\"nombre\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"categoria_nombre_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "categoria_nombre_key",
+          "public",
+          "\"public\".\"categoria\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.producto.producto_codigo_key",
+    "label": "Add unique constraint on \"producto\" (codigo)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "producto_codigo_key",
+        "table": "producto"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"producto_codigo_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "producto_codigo_key",
+          "public",
+          "\"public\".\"producto\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"producto_codigo_key\"",
+        "sql": "ALTER TABLE \"public\".\"producto\" ADD CONSTRAINT \"producto_codigo_key\" UNIQUE (\"codigo\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"producto_codigo_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "producto_codigo_key",
+          "public",
+          "\"public\".\"producto\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.movimientoInventario.movimientoInventario_productoId_idx_cc0c10f0",
+    "label": "Create index \"movimientoInventario_productoId_idx_cc0c10f0\" on \"movimientoInventario\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "movimientoInventario_productoId_idx_cc0c10f0",
+        "table": "movimientoInventario"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"movimientoInventario_productoId_idx_cc0c10f0\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"movimientoInventario_productoId_idx_cc0c10f0\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"movimientoInventario_productoId_idx_cc0c10f0\"",
+        "sql": "CREATE INDEX \"movimientoInventario_productoId_idx_cc0c10f0\" ON \"public\".\"movimientoInventario\" (\"productoId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"movimientoInventario_productoId_idx_cc0c10f0\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"movimientoInventario_productoId_idx_cc0c10f0\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.producto.producto_categoriaId_idx_63b46427",
+    "label": "Create index \"producto_categoriaId_idx_63b46427\" on \"producto\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "producto_categoriaId_idx_63b46427",
+        "table": "producto"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"producto_categoriaId_idx_63b46427\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"producto_categoriaId_idx_63b46427\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"producto_categoriaId_idx_63b46427\"",
+        "sql": "CREATE INDEX \"producto_categoriaId_idx_63b46427\" ON \"public\".\"producto\" (\"categoriaId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"producto_categoriaId_idx_63b46427\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"producto_categoriaId_idx_63b46427\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.movimientoInventario.movimientoInventario_productoId_fkey",
+    "label": "Add foreign key \"movimientoInventario_productoId_fkey\" on \"movimientoInventario\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "movimientoInventario_productoId_fkey",
+        "table": "movimientoInventario"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"movimientoInventario_productoId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "movimientoInventario_productoId_fkey",
+          "public",
+          "\"public\".\"movimientoInventario\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"movimientoInventario_productoId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"movimientoInventario\"\nADD CONSTRAINT \"movimientoInventario_productoId_fkey\"\nFOREIGN KEY (\"productoId\")\nREFERENCES \"public\".\"producto\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"movimientoInventario_productoId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "movimientoInventario_productoId_fkey",
+          "public",
+          "\"public\".\"movimientoInventario\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.producto.producto_categoriaId_fkey",
+    "label": "Add foreign key \"producto_categoriaId_fkey\" on \"producto\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "producto_categoriaId_fkey",
+        "table": "producto"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"producto_categoriaId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "producto_categoriaId_fkey",
+          "public",
+          "\"public\".\"producto\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"producto_categoriaId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"producto\"\nADD CONSTRAINT \"producto_categoriaId_fkey\"\nFOREIGN KEY (\"categoriaId\")\nREFERENCES \"public\".\"categoria\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"producto_categoriaId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "producto_categoriaId_fkey",
+          "public",
+          "\"public\".\"producto\""
+        ]
+      }
+    ]
+  }
+]
