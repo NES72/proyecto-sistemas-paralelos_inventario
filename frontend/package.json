@@ -1,18 +1,19 @@
 {
   "name": "frontend",
   "version": "1.0.0",
-  "main": "index.js",
   "scripts": {
-    "dev": "vite",
-    "test": "echo \"Error: no test specified\""
+    "dev": "vite"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "cookie": "^1.1.1",
     "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "react-dom": "^19.2.8",
+    "react-router-dom": "^7.18.3",
+    "set-cookie-parser": "^3.1.2"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^6.1.1",

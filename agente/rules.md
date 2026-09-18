@@ -19,7 +19,7 @@ La comunicación debe seguir el siguiente flujo:
 
 Frontend
     |
-    | HTTP / REST
+    | HTTP / REST (proxy /api en Vite)
     v
 Backend
     |
@@ -28,6 +28,25 @@ Backend
 PostgreSQL
 
 El frontend no debe comunicarse directamente con PostgreSQL.
+
+## 2.1 Capas del backend
+
+El backend se organiza en capas separadas por responsabilidad:
+
+| Capa              | Ubicación                    | Responsabilidad                                        |
+| ----------------- | ---------------------------- | ------------------------------------------------------ |
+| Punto de entrada  | `backend/server.js`          | Configura Express, CORS y monta las rutas.             |
+| Rutas             | `backend/routes/`            | Definen los endpoints HTTP y las respuestas.           |
+| Lógica de negocio | `backend/services/`          | Reglas de negocio (stock insuficiente, AJUSTE con motivo). |
+| Middleware        | `backend/middleware/`        | Validación de entrada y manejo de errores.             |
+| Acceso a datos    | `backend/lib/db.js`          | Único punto de acceso a Prisma 8 (retorna los modelos). |
+
+Reglas de esta separación:
+
+1. Las rutas no deben contener lógica de negocio; la delegan a los servicios.
+2. La persistencia solo se realiza a través de `lib/db.js` (Prisma ORM).
+3. Las validaciones de entrada se aplican en middleware antes de tocar la base de datos.
+4. Los errores inesperados se derivan a `errorHandler` mediante `next(err)`.
 
 ## 3. Backend
 
@@ -48,7 +67,7 @@ Prisma ORM será el mecanismo de acceso a los datos.
 
 El esquema de datos estará definido en:
 
-`backend/prisma/schema.prisma`
+`backend/prisma/contract.prisma`
 
 Los cambios estructurales deberán realizarse mediante migraciones de Prisma.
 

@@ -41,7 +41,7 @@ Prisma será el intermediario entre el backend y PostgreSQL.
 
 Las modificaciones al modelo de datos deben realizarse mediante el archivo:
 
-`backend/prisma/schema.prisma`
+`backend/prisma/contract.prisma`
 
 Los cambios estructurales de la base de datos deben gestionarse mediante migraciones de Prisma.
 

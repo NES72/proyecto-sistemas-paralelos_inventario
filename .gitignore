@@ -12,3 +12,9 @@ build/
 coverage/
 
 .prisma/
+
+.agents/
+.claude/
+.cursor/
+.devin/
+skills-lock.json

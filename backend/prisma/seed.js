@@ -1,97 +1,60 @@
-const { readFileSync } = require('fs');
-const path = require('path');
+import { readFileSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const CONTRACT_JSON_PATH = path.join(__dirname, 'contract.json');
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const CONTRACT_JSON_PATH = join(__dirname, 'contract.json');
 
-async function main() {
+await import('temporal-polyfill/full/global');
+
+const contractJson = JSON.parse(readFileSync(CONTRACT_JSON_PATH, 'utf8'));
+const { default: postgres } = await import('@prisma/orm-postgres/runtime');
+
+const db = postgres({ contractJson, url: process.env.DATABASE_URL });
+await db.connect();
+
+const Categoria = db.orm.public.Categoria;
+const Producto = db.orm.public.Producto;
+const MovimientoInventario = db.orm.public.MovimientoInventario;
+
+async function upsertCategoria(nombre, descripcion) {
+  const existente = await Categoria.first({ nombre });
+  if (existente) return existente;
+  return Categoria.create({ nombre, descripcion, estado: true });
+}
+
+async function upsertProducto(data) {
+  const existente = await Producto.first({ codigo: data.codigo });
+  if (existente) return existente;
+  return Producto.create(data);
+}
+
+try {
   console.log('Iniciando seed de la base de datos...');
-
-  await import('temporal-polyfill/full/global');
-
-  const contractJson = JSON.parse(readFileSync(CONTRACT_JSON_PATH, 'utf8'));
-
-  const { default: postgres } = await import('@prisma/orm-postgres/runtime');
-
-  const db = postgres({
-    contractJson,
-    url: process.env.DATABASE_URL,
-  });
-
-  await db.connect();
-
-  const Categoria = db.orm.public.Categoria;
-  const Producto = db.orm.public.Producto;
-  const MovimientoInventario = db.orm.public.MovimientoInventario;
-
-  async function upsertCategoria(nombre, descripcion) {
-    const existente = await Categoria.first({ nombre });
-    if (existente) return existente;
-    return Categoria.create({ nombre, descripcion, estado: true });
-  }
-
-  async function upsertProducto(data) {
-    const existente = await Producto.first({ codigo: data.codigo });
-    if (existente) return existente;
-    return Producto.create(data);
-  }
 
   const electronica = await upsertCategoria('Electrónica', 'Equipos y accesorios electrónicos');
   const oficina = await upsertCategoria('Oficina', 'Productos y materiales de oficina');
   const herramientas = await upsertCategoria('Herramientas', 'Herramientas para trabajo y mantenimiento');
 
   const teclado = await upsertProducto({
-    codigo: 'PROD-0001',
-    nombre: 'Teclado USB',
-    descripcion: 'Teclado USB para computadora',
-    precio: 85.0,
-    stock: 20,
-    stockMinimo: 5,
-    estado: true,
-    categoriaId: electronica.id
+    codigo: 'PROD-0001', nombre: 'Teclado USB', descripcion: 'Teclado USB para computadora',
+    precio: 85.0, stock: 20, stockMinimo: 5, estado: true, categoriaId: electronica.id
   });
-
   const mouse = await upsertProducto({
-    codigo: 'PROD-0002',
-    nombre: 'Mouse USB',
-    descripcion: 'Mouse óptico USB',
-    precio: 45.0,
-    stock: 30,
-    stockMinimo: 10,
-    estado: true,
-    categoriaId: electronica.id
+    codigo: 'PROD-0002', nombre: 'Mouse USB', descripcion: 'Mouse óptico USB',
+    precio: 45.0, stock: 30, stockMinimo: 10, estado: true, categoriaId: electronica.id
   });
-
   const cuaderno = await upsertProducto({
-    codigo: 'PROD-0003',
-    nombre: 'Cuaderno universitario',
-    descripcion: 'Cuaderno de 100 hojas',
-    precio: 18.0,
-    stock: 50,
-    stockMinimo: 10,
-    estado: true,
-    categoriaId: oficina.id
+    codigo: 'PROD-0003', nombre: 'Cuaderno universitario', descripcion: 'Cuaderno de 100 hojas',
+    precio: 18.0, stock: 50, stockMinimo: 10, estado: true, categoriaId: oficina.id
   });
-
   const martillo = await upsertProducto({
-    codigo: 'PROD-0004',
-    nombre: 'Martillo',
-    descripcion: 'Martillo de acero',
-    precio: 75.0,
-    stock: 8,
-    stockMinimo: 3,
-    estado: true,
-    categoriaId: herramientas.id
+    codigo: 'PROD-0004', nombre: 'Martillo', descripcion: 'Martillo de acero',
+    precio: 75.0, stock: 8, stockMinimo: 3, estado: true, categoriaId: herramientas.id
   });
-
   const destornillador = await upsertProducto({
-    codigo: 'PROD-0005',
-    nombre: 'Destornillador',
-    descripcion: 'Destornillador de punta plana',
-    precio: 35.0,
-    stock: 12,
-    stockMinimo: 5,
-    estado: true,
-    categoriaId: herramientas.id
+    codigo: 'PROD-0005', nombre: 'Destornillador', descripcion: 'Destornillador de punta plana',
+    precio: 35.0, stock: 12, stockMinimo: 5, estado: true, categoriaId: herramientas.id
   });
 
   const yaExistenMovimientos = await MovimientoInventario.first();
@@ -105,16 +68,7 @@ async function main() {
     ]);
   }
 
-  console.log('Categorías creadas correctamente.');
-  console.log('Productos creados correctamente.');
-  console.log('Movimientos iniciales creados.');
   console.log('Seed completado correctamente.');
-
+} finally {
   await db.close();
 }
-
-main()
-  .catch((error) => {
-    console.error('Error ejecutando seed:', error);
-    process.exit(1);
-  });

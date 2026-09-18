@@ -21,9 +21,10 @@ El proyecto está compuesto por los siguientes servicios:
 ```text
                     ┌─────────────────────┐
                     │      FRONTEND       │
+                    │  React + Vite       │
                     │      Puerto 5173    │
                     └──────────┬──────────┘
-                               │
+                               │  proxy /api
                                ▼
                     ┌─────────────────────┐
                     │       BACKEND       │
@@ -31,7 +32,7 @@ El proyecto está compuesto por los siguientes servicios:
                     │      Express        │
                     │      Puerto 3000    │
                     └──────────┬──────────┘
-                               │
+                               │ Prisma ORM
                                ▼
                     ┌─────────────────────┐
                     │     POSTGRESQL      │
@@ -41,44 +42,66 @@ El proyecto está compuesto por los siguientes servicios:
 
 ## Tecnologías utilizadas
 
-| Tecnología     | Uso                                |
-| -------------- | ---------------------------------- |
-| Node.js        | Entorno de ejecución del backend   |
-| Express        | Framework del backend              |
-| PostgreSQL     | Sistema gestor de base de datos    |
-| Prisma ORM     | Contrato, migraciones y acceso ORM |
-| Docker         | Contenedorización                  |
-| Docker Compose | Orquestación de los servicios      |
-| Git            | Control de versiones               |
-| GitHub         | Publicación del proyecto           |
+| Tecnología       | Uso                                          |
+| ---------------- | -------------------------------------------- |
+| Node.js          | Entorno de ejecución del backend (ESM)      |
+| Express 5        | Framework de la API REST del backend        |
+| Prisma 8 ORM     | Contrato, migraciones y acceso ORM          |
+| PostgreSQL 15    | Sistema gestor de base de datos             |
+| React 19         | Biblioteca de interfaz del frontend          |
+| Vite 8           | Servidor de desarrollo y empaquetado        |
+| React Router 7   | Navegación de la SPA                         |
+| Docker           | Contenedorización                            |
+| Docker Compose   | Orquestación de los servicios                |
+| Git / GitHub     | Control de versiones y publicación           |
 
 ## Estructura del proyecto
 
 ```text
 proyecto-sistemas-paralelos/
 ├── agente/
-│   ├── skills/
-│   │   ├── backend-syslab/
-│   │   │   └── SKILL.md
-│   │   └── inventario/
-│   │       └── SKILL.md
-│   └── rules.md
+│   ├── rules.md                        Reglas de arquitectura SysLab 2.0
+│   └── skills/
+│       ├── backend-syslab/SKILL.md
+│       └── inventario/SKILL.md
 │
 ├── backend/
-│   ├── migrations/
+│   ├── lib/db.js                       Único punto de acceso a Prisma 8 (ORM)
+│   ├── middleware/                     Validación de entrada y manejo de errores
+│   │   ├── errorHandler.js
+│   │   └── validate.js
+│   ├── routes/                         Endpoints REST
+│   │   ├── categorias.js
+│   │   ├── productos.js
+│   │   └── movimientos.js
+│   ├── services/
+│   │   └── inventarioService.js        Lógica de negocio (reglas de stock)
 │   ├── prisma/
-│   │   ├── schema.prisma
-│   │   └── seed.js
-│   ├── prisma.config.ts
-│   ├── Dockerfile
-│   ├── package.json
-│   └── server.js
-│
-├── frontend/
+│   │   ├── contract.prisma             Esquema (fuente de verdad de la BD)
+│   │   ├── contract.json               Contrato emitido (usa el runtime)
+│   │   ├── contract.d.ts
+│   │   └── seed.js                     Datos iniciales idempotentes
+│   ├── migrations/                     Migraciones y snapshots versionados
+│   ├── prisma.config.ts                Configuración del CLI de Prisma
+│   ├── server.js                       Punto de entrada (Express)
+│   ├── docker-entrypoint.sh            Espera BD + migra + seed + arranca
 │   ├── Dockerfile
 │   └── package.json
 │
+├── frontend/
+│   ├── index.html
+│   ├── vite.config.js                  Proxy /api → http://backend:3000
+│   ├── Dockerfile
+│   ├── package.json
+│   └── src/
+│       ├── main.jsx                    Montaje de React
+│       ├── App.jsx                     Router + navegación
+│       ├── index.css
+│       ├── pages/                      Categorias, Productos, Movimientos
+│       └── services/api.js             Cliente HTTP del backend
+│
 ├── docker-compose.yml
+├── oc.md
 ├── README.md
 └── .gitignore
 ```
@@ -92,6 +115,45 @@ El proyecto utiliza tres contenedores principales:
 | `lab_frontend`    | Frontend   |   5173 |
 | `lab_backend`     | Backend    |   3000 |
 | `lab_postgres_db` | PostgreSQL |   5432 |
+
+## API REST
+
+El backend expone los siguientes endpoints bajo `http://localhost:3000/api` (el frontend accede a través del proxy `/api` en `localhost:5173`):
+
+### Categorías
+
+| Método | Ruta                  | Descripción                              |
+| ------ | --------------------- | ---------------------------------------- |
+| GET    | `/api/categorias`       | Lista todas las categorías               |
+| POST   | `/api/categorias`       | Crea una categoría                       |
+| GET    | `/api/categorias/:id`   | Obtiene una categoría por id             |
+| PUT    | `/api/categorias/:id`   | Actualiza una categoría                  |
+| DELETE | `/api/categorias/:id`   | Elimina una categoría (bloqueada si tiene productos) |
+
+### Productos
+
+| Método | Ruta                 | Descripción                              |
+| ------ | -------------------- | ---------------------------------------- |
+| GET    | `/api/productos`       | Lista todos los productos                |
+| POST   | `/api/productos`       | Crea un producto (require `categoriaId`) |
+| GET    | `/api/productos/:id`   | Obtiene un producto por id               |
+| PUT    | `/api/productos/:id`   | Actualiza un producto                    |
+| DELETE | `/api/productos/:id`   | Elimina un producto (bloqueada si tiene movimientos) |
+
+### Movimientos de inventario
+
+| Método | Ruta                    | Descripción                                             |
+| ------ | ----------------------- | ------------------------------------------------------- |
+| GET    | `/api/movimientos`        | Lista todos los movimientos                            |
+| GET    | `/api/movimientos/:id`    | Obtiene un movimiento por id                            |
+| POST   | `/api/movimientos`        | Registra un movimiento (`ENTRADA`, `SALIDA` o `AJUSTE`) |
+
+### Reglas de negocio aplicadas
+
+- `ENTRADA`: incrementa el stock del producto.
+- `SALIDA`: rechazada si la cantidad supera el stock disponible (`Stock insuficiente`).
+- `AJUSTE`: requiere `motivo` y fija el stock al valor indicado.
+- Nunca se permite stock negativo.
 
 ## Base de datos
 
@@ -211,10 +273,10 @@ feat(db): migrar esquema a postgresql y ejecutar script de seed
 
 Actualmente se encuentra configurado un entorno funcional de desarrollo compuesto por:
 
-* Backend Node.js + Express.
-* Frontend independiente.
+* Backend Node.js + Express (API REST completa, ESM).
+* Frontend React + Vite funcional (listado/CRUD de categorías, productos y movimientos).
 * PostgreSQL.
-* Prisma ORM.
+* Prisma ORM con contrato y migraciones versionadas.
 * Docker Compose.
 * Skills y reglas para la arquitectura SysLab 2.0.
 * Migraciones versionadas.
