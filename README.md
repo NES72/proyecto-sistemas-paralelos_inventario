@@ -1,4 +1,4 @@
-# Sistema de Gestión de Inventario — SysLab 2.0
+# Sistema de Gestión de Inventario
 
 ## Descripción
 
@@ -14,7 +14,7 @@ El proyecto está compuesto por los siguientes servicios:
 * **Frontend:** Aplicación frontend ejecutada como servicio independiente.
 * **PostgreSQL:** Base de datos relacional para la persistencia de la información.
 * **Prisma ORM:** Utilizado para definir y gestionar el esquema y las migraciones de la base de datos.
-* **Agente:** Contiene las reglas y skills utilizadas para orientar el desarrollo de acuerdo con la arquitectura SysLab 2.0.
+* **Agente:** Contiene las reglas y skills utilizadas para orientar el desarrollo de acuerdo con la arquitectura por capas del proyecto.
 
 ### Diagrama general
 
@@ -60,9 +60,9 @@ El proyecto está compuesto por los siguientes servicios:
 ```text
 proyecto-sistemas-paralelos/
 ├── agente/
-│   ├── rules.md                        Reglas de arquitectura SysLab 2.0
+│   ├── rules.md                        Reglas de arquitectura del proyecto
 │   └── skills/
-│       ├── backend-syslab/SKILL.md
+│       ├── backend/SKILL.md
 │       └── inventario/SKILL.md
 │
 ├── backend/
@@ -160,7 +160,7 @@ El backend expone los siguientes endpoints bajo `http://localhost:3000/api` (el 
 La base de datos PostgreSQL utiliza el nombre:
 
 ```text
-syslab_db
+inventario_db
 ```
 
 El esquema de inventario contempla las siguientes entidades principales:
@@ -263,7 +263,7 @@ Entre los commits realizados se encuentran:
 
 ```text
 feat(backend): definir esquema de prisma y script de seed inicial
-chore(agente): incorporar skills de tasteskill y reglas de arquitectura syslab 2.0
+chore(agente): incorporar skills y reglas de arquitectura del proyecto
 feat(docker): configurar entorno multi-contenedor con docker-compose
 fix(backend): adaptar seed al runtime de prisma 8
 feat(db): migrar esquema a postgresql y ejecutar script de seed
@@ -278,7 +278,7 @@ Actualmente se encuentra configurado un entorno funcional de desarrollo compuest
 * PostgreSQL.
 * Prisma ORM con contrato y migraciones versionadas.
 * Docker Compose.
-* Skills y reglas para la arquitectura SysLab 2.0.
+* Skills y reglas de arquitectura por capas.
 * Migraciones versionadas.
 * Seed inicial e idempotente.
 

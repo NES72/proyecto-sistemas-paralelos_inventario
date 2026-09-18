@@ -4,7 +4,7 @@
 
 Estas reglas definen el comportamiento que debe seguir el agente de IA durante el desarrollo del Sistema de Gestión de Inventario.
 
-El proyecto utiliza una arquitectura basada en SysLab 2.0 y está compuesto por:
+El proyecto utiliza una arquitectura por capas y está compuesto por:
 
 - Frontend
 - Backend
@@ -170,5 +170,5 @@ El agente debe priorizar:
 2. Seguridad.
 3. Separación de responsabilidades.
 4. Consistencia del inventario.
-5. Compatibilidad con la arquitectura SysLab 2.0.
+5. Compatibilidad con la arquitectura por capas del proyecto.
 6. Código mantenible.

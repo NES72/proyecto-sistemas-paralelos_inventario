@@ -1,8 +1,8 @@
-# Backend SysLab 2.0
+# Backend del Sistema de Inventario
 
 ## Objetivo
 
-Definir las instrucciones para desarrollar y mantener el backend del Sistema de Gestión de Inventario siguiendo una arquitectura basada en SysLab 2.0.
+Definir las instrucciones para desarrollar y mantener el backend del Sistema de Gestión de Inventario siguiendo las reglas de arquitectura por capas del proyecto.
 
 ## Tecnologías
 
@@ -27,7 +27,7 @@ Definir las instrucciones para desarrollar y mantener el backend del Sistema de 
 
 6. Las responsabilidades deben mantenerse separadas entre rutas, lógica de negocio y acceso a datos.
 
-7. Las operaciones relacionadas con la base de datos deben utilizar el cliente de Prisma.
+7. Las operaciones de base de datos deben realizarse únicamente a través de `backend/lib/db.js`, que centraliza el acceso al runtime de Prisma 8 (`@prisma/orm-postgres`).
 
 8. Los errores deben manejarse de forma controlada y proporcionar respuestas apropiadas a la API.
 

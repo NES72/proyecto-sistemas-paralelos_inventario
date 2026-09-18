@@ -6,7 +6,7 @@ import Movimientos from './pages/Movimientos';
 function Navbar() {
   return (
     <nav className="navbar">
-      <div className="navbar-brand">SysLab Inventario</div>
+      <div className="navbar-brand">Inventario</div>
       <div className="navbar-links">
         <NavLink to="/">Inicio</NavLink>
         <NavLink to="/categorias">Categorias</NavLink>
@@ -21,7 +21,7 @@ function Inicio() {
   return (
     <div className="page">
       <h1>Sistema de Gestion de Inventario</h1>
-      <p className="subtitle">SysLab 2.0</p>
+      <p className="subtitle">Control de stock y movimientos</p>
       <div className="cards">
         <NavLink to="/categorias" className="card">
           <h3>Categorias</h3>
