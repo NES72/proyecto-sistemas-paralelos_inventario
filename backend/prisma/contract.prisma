@@ -49,3 +49,33 @@ model MovimientoInventario {
 
   createdAt DateTime @default(now())
 }
+
+enum Rol {
+  @@type("pg/text@1")
+  ADMINISTRADOR
+  OPERADOR
+}
+
+model Usuario {
+  id       Int     @id @default(autoincrement())
+  nombre   String
+  usuario  String  @unique
+  password String
+  rol      Rol     @default(OPERADOR)
+  estado   Boolean @default(true)
+
+  sesiones Sesion[]
+
+  createdAt DateTime @default(now())
+  updatedAt temporal.updatedAt()
+}
+
+model Sesion {
+  id        Int      @id @default(autoincrement())
+  tokenHash String   @unique
+  usuarioId Int
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id])
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  revocado  Boolean  @default(false)
+}

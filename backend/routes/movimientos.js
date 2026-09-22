@@ -8,7 +8,13 @@ const router = Router();
 router.get('/', async (req, res, next) => {
   try {
     const MovimientoInventario = await getMovimientoInventario();
-    const movimientos = await MovimientoInventario.all();
+    const filtro = {};
+    if (req.query.productoId && !Number.isNaN(Number(req.query.productoId))) {
+      filtro.productoId = Number(req.query.productoId);
+    }
+    const movimientos = Object.keys(filtro).length
+      ? await MovimientoInventario.where(filtro).all()
+      : await MovimientoInventario.all();
     res.json(movimientos);
   } catch (err) {
     next(err);

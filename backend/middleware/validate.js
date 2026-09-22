@@ -1,4 +1,5 @@
 const TIPOS_MOVIMIENTO = ['ENTRADA', 'SALIDA', 'AJUSTE'];
+const ROLES = ['ADMINISTRADOR', 'OPERADOR'];
 
 export function validarCategoria(body) {
   const errores = [];
@@ -61,6 +62,56 @@ export function validarMovimiento(body) {
 
   if (body.tipo === 'AJUSTE' && (!body.motivo || typeof body.motivo !== 'string' || body.motivo.trim() === '')) {
     errores.push('motivo es requerido para movimientos de tipo AJUSTE');
+  }
+
+  return errores;
+}
+
+export function validarLogin(body) {
+  const errores = [];
+
+  if (!body.usuario || typeof body.usuario !== 'string' || body.usuario.trim() === '') {
+    errores.push('usuario es requerido');
+  }
+
+  if (!body.password || typeof body.password !== 'string' || body.password.trim() === '') {
+    errores.push('password es requerida');
+  }
+
+  return errores;
+}
+
+export function validarUsuario(body) {
+  const errores = [];
+
+  if (!body.nombre || typeof body.nombre !== 'string' || body.nombre.trim() === '') {
+    errores.push('nombre es requerido');
+  }
+
+  if (!body.usuario || typeof body.usuario !== 'string' || body.usuario.trim() === '') {
+    errores.push('usuario es requerido');
+  }
+
+  if (!body.password || typeof body.password !== 'string' || body.password.length < 6) {
+    errores.push('password es requerida y debe tener al menos 6 caracteres');
+  }
+
+  if (body.rol !== undefined && body.rol !== null && !ROLES.includes(body.rol)) {
+    errores.push(`rol debe ser: ${ROLES.join(', ')}`);
+  }
+
+  return errores;
+}
+
+export function validarCambioPassword(body) {
+  const errores = [];
+
+  if (!body.passwordActual || typeof body.passwordActual !== 'string' || body.passwordActual.trim() === '') {
+    errores.push('passwordActual es requerida');
+  }
+
+  if (!body.nuevaPassword || typeof body.nuevaPassword !== 'string' || body.nuevaPassword.length < 6) {
+    errores.push('nuevaPassword es requerida y debe tener al menos 6 caracteres');
   }
 
   return errores;

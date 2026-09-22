@@ -2,6 +2,8 @@ import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { hashPassword } from '../lib/security.js';
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const CONTRACT_JSON_PATH = join(__dirname, 'contract.json');
 
@@ -16,6 +18,7 @@ await db.connect();
 const Categoria = db.orm.public.Categoria;
 const Producto = db.orm.public.Producto;
 const MovimientoInventario = db.orm.public.MovimientoInventario;
+const Usuario = db.orm.public.Usuario;
 
 async function upsertCategoria(nombre, descripcion) {
   const existente = await Categoria.first({ nombre });
@@ -30,42 +33,54 @@ async function upsertProducto(data) {
 }
 
 try {
-  console.log('Iniciando seed de la base de datos...');
+  console.log('Iniciando seed de la base de datos (ferreteria)...');
 
-  const electronica = await upsertCategoria('Electrónica', 'Equipos y accesorios electrónicos');
-  const oficina = await upsertCategoria('Oficina', 'Productos y materiales de oficina');
-  const herramientas = await upsertCategoria('Herramientas', 'Herramientas para trabajo y mantenimiento');
+  const herramientas = await upsertCategoria('Herramientas Manuales', 'Herramientas para trabajo manual');
+  const fijaciones = await upsertCategoria('Fijaciones y Tornilleria', 'Tornillos, clavos y elementos de fijacion');
+  const materialElectrico = await upsertCategoria('Material Electrico', 'Insumos electricos y de iluminacion');
 
-  const teclado = await upsertProducto({
-    codigo: 'PROD-0001', nombre: 'Teclado USB', descripcion: 'Teclado USB para computadora',
-    precio: 85.0, stock: 20, stockMinimo: 5, estado: true, categoriaId: electronica.id
-  });
-  const mouse = await upsertProducto({
-    codigo: 'PROD-0002', nombre: 'Mouse USB', descripcion: 'Mouse óptico USB',
-    precio: 45.0, stock: 30, stockMinimo: 10, estado: true, categoriaId: electronica.id
-  });
-  const cuaderno = await upsertProducto({
-    codigo: 'PROD-0003', nombre: 'Cuaderno universitario', descripcion: 'Cuaderno de 100 hojas',
-    precio: 18.0, stock: 50, stockMinimo: 10, estado: true, categoriaId: oficina.id
-  });
   const martillo = await upsertProducto({
-    codigo: 'PROD-0004', nombre: 'Martillo', descripcion: 'Martillo de acero',
-    precio: 75.0, stock: 8, stockMinimo: 3, estado: true, categoriaId: herramientas.id
+    codigo: 'FER-0001', nombre: 'Martillo de Uña 500g', descripcion: 'Martillo de uña con mango ergonomico',
+    precio: 12.5, stock: 8, stockMinimo: 3, estado: true, categoriaId: herramientas.id
   });
   const destornillador = await upsertProducto({
-    codigo: 'PROD-0005', nombre: 'Destornillador', descripcion: 'Destornillador de punta plana',
-    precio: 35.0, stock: 12, stockMinimo: 5, estado: true, categoriaId: herramientas.id
+    codigo: 'FER-0002', nombre: 'Destornillador Plano 6mm', descripcion: 'Destornillador plano con mango antideslizante',
+    precio: 5.8, stock: 15, stockMinimo: 5, estado: true, categoriaId: herramientas.id
+  });
+  const llave = await upsertProducto({
+    codigo: 'FER-0003', nombre: 'Llave Ajustable 12"', descripcion: 'Llave ajustable de acero cromado',
+    precio: 25.0, stock: 6, stockMinimo: 2, estado: true, categoriaId: herramientas.id
+  });
+  const tornillos = await upsertProducto({
+    codigo: 'FER-0004', nombre: 'Tornillos 1/4" x 1" (bolsa x100)', descripcion: 'Bolsa con 100 tornillos de acero',
+    precio: 3.9, stock: 40, stockMinimo: 10, estado: true, categoriaId: fijaciones.id
+  });
+  const cinta = await upsertProducto({
+    codigo: 'FER-0005', nombre: 'Cinta Aislante Negra', descripcion: 'Rollo de cinta aislante para instalaciones electricas',
+    precio: 2.5, stock: 25, stockMinimo: 8, estado: true, categoriaId: materialElectrico.id
   });
 
   const yaExistenMovimientos = await MovimientoInventario.first();
   if (!yaExistenMovimientos) {
     await MovimientoInventario.createAll([
-      { tipo: 'ENTRADA', cantidad: 20, motivo: 'Carga inicial del inventario', productoId: teclado.id },
-      { tipo: 'ENTRADA', cantidad: 30, motivo: 'Carga inicial del inventario', productoId: mouse.id },
-      { tipo: 'ENTRADA', cantidad: 50, motivo: 'Carga inicial del inventario', productoId: cuaderno.id },
       { tipo: 'ENTRADA', cantidad: 8, motivo: 'Carga inicial del inventario', productoId: martillo.id },
-      { tipo: 'ENTRADA', cantidad: 12, motivo: 'Carga inicial del inventario', productoId: destornillador.id }
+      { tipo: 'ENTRADA', cantidad: 15, motivo: 'Carga inicial del inventario', productoId: destornillador.id },
+      { tipo: 'ENTRADA', cantidad: 6, motivo: 'Carga inicial del inventario', productoId: llave.id },
+      { tipo: 'ENTRADA', cantidad: 40, motivo: 'Carga inicial del inventario', productoId: tornillos.id },
+      { tipo: 'ENTRADA', cantidad: 25, motivo: 'Carga inicial del inventario', productoId: cinta.id }
     ]);
+  }
+
+  const usuarioAdmin = await Usuario.first({ usuario: 'admin' });
+  if (!usuarioAdmin) {
+    await Usuario.create({
+      nombre: 'Administrador FerroStock',
+      usuario: 'admin',
+      password: await hashPassword('admin2026'),
+      rol: 'ADMINISTRADOR',
+      estado: true
+    });
+    console.log('Usuario admin creado (admin / admin2026).');
   }
 
   console.log('Seed completado correctamente.');

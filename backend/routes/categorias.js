@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { getCategoria, getProducto } from '../lib/db.js';
 import { validarCategoria } from '../middleware/validate.js';
+import { requireAdmin } from '../middleware/auth.js';
 
 const router = Router();
 
@@ -76,7 +77,7 @@ router.put('/:id', async (req, res, next) => {
   }
 });
 
-router.delete('/:id', async (req, res, next) => {
+router.delete('/:id', requireAdmin, async (req, res, next) => {
   try {
     const Categoria = await getCategoria();
     const Producto = await getProducto();

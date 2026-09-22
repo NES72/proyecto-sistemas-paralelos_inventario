@@ -2,7 +2,9 @@ import express from 'express';
 import categoriasRouter from './routes/categorias.js';
 import productosRouter from './routes/productos.js';
 import movimientosRouter from './routes/movimientos.js';
+import authRouter from './routes/auth.js';
 import { errorHandler } from './middleware/errorHandler.js';
+import { requireAuth } from './middleware/auth.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -28,9 +30,10 @@ app.get('/health', (req, res) => {
   res.json({ estado: 'ok' });
 });
 
-app.use('/api/categorias', categoriasRouter);
-app.use('/api/productos', productosRouter);
-app.use('/api/movimientos', movimientosRouter);
+app.use('/api/auth', authRouter);
+app.use('/api/categorias', requireAuth, categoriasRouter);
+app.use('/api/productos', requireAuth, productosRouter);
+app.use('/api/movimientos', requireAuth, movimientosRouter);
 
 app.use(errorHandler);
 

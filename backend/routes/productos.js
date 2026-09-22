@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { getProducto, getCategoria, getMovimientoInventario } from '../lib/db.js';
 import { validarProducto } from '../middleware/validate.js';
+import { requireAdmin } from '../middleware/auth.js';
+import { registrarMovimiento } from '../services/inventarioService.js';
 
 const router = Router();
 
@@ -39,18 +41,30 @@ router.post('/', async (req, res, next) => {
     const existente = await Producto.first({ codigo: req.body.codigo });
     if (existente) return res.status(409).json({ error: 'Ya existe un producto con ese codigo' });
 
+    const stockInicial = req.body.stock || 0;
+
     const producto = await Producto.create({
       codigo: req.body.codigo,
       nombre: req.body.nombre,
       descripcion: req.body.descripcion || null,
       precio: req.body.precio,
-      stock: req.body.stock || 0,
+      stock: 0,
       stockMinimo: req.body.stockMinimo || 5,
       estado: req.body.estado !== undefined ? req.body.estado : true,
       categoriaId: req.body.categoriaId
     });
 
-    res.status(201).json(producto);
+    if (stockInicial > 0) {
+      await registrarMovimiento({
+        tipo: 'ENTRADA',
+        cantidad: stockInicial,
+        motivo: 'Stock inicial al registrar el producto',
+        productoId: producto.id
+      });
+    }
+
+    const actualizado = await Producto.first({ id: producto.id });
+    res.status(201).json(actualizado);
   } catch (err) {
     next(err);
   }
@@ -82,7 +96,6 @@ router.put('/:id', async (req, res, next) => {
       nombre: req.body.nombre,
       descripcion: req.body.descripcion,
       precio: req.body.precio,
-      stock: req.body.stock,
       stockMinimo: req.body.stockMinimo,
       estado: req.body.estado,
       categoriaId: req.body.categoriaId
@@ -94,7 +107,7 @@ router.put('/:id', async (req, res, next) => {
   }
 });
 
-router.delete('/:id', async (req, res, next) => {
+router.delete('/:id', requireAdmin, async (req, res, next) => {
   try {
     const Producto = await getProducto();
     const MovimientoInventario = await getMovimientoInventario();

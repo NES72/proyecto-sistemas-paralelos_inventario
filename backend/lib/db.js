@@ -35,3 +35,13 @@ export async function getMovimientoInventario() {
   const db = await getDb();
   return db.orm.public.MovimientoInventario;
 }
+
+export async function getUsuario() {
+  const db = await getDb();
+  return db.orm.public.Usuario;
+}
+
+export async function getSesion() {
+  const db = await getDb();
+  return db.orm.public.Sesion;
+}

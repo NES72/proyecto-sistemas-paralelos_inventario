@@ -1,0 +1,245 @@
+[
+  {
+    "id": "table.sesion",
+    "label": "Create table \"sesion\"",
+    "summary": "Creates table \"sesion\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "sesion"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"sesion\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"sesion\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"sesion\"",
+        "sql": "CREATE TABLE \"public\".\"sesion\" (\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"expiresAt\" timestamptz NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"revocado\" bool DEFAULT false NOT NULL,\n  \"tokenHash\" text NOT NULL,\n  \"usuarioId\" int4 NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"sesion\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"sesion\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.usuario",
+    "label": "Create table \"usuario\"",
+    "summary": "Creates table \"usuario\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "usuario"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"usuario\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"usuario\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"usuario\"",
+        "sql": "CREATE TABLE \"public\".\"usuario\" (\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"estado\" bool DEFAULT true NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"nombre\" text NOT NULL,\n  \"password\" text NOT NULL,\n  \"rol\" text DEFAULT 'OPERADOR' NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"usuario\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"usuario_rol_check_68c23eff\" CHECK (\"rol\" IN ('ADMINISTRADOR', 'OPERADOR'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"usuario\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"usuario\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.sesion.sesion_tokenHash_key",
+    "label": "Add unique constraint on \"sesion\" (tokenHash)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "sesion_tokenHash_key",
+        "table": "sesion"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"sesion_tokenHash_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "sesion_tokenHash_key",
+          "public",
+          "\"public\".\"sesion\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"sesion_tokenHash_key\"",
+        "sql": "ALTER TABLE \"public\".\"sesion\" ADD CONSTRAINT \"sesion_tokenHash_key\" UNIQUE (\"tokenHash\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"sesion_tokenHash_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "sesion_tokenHash_key",
+          "public",
+          "\"public\".\"sesion\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.usuario.usuario_usuario_key",
+    "label": "Add unique constraint on \"usuario\" (usuario)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "usuario_usuario_key",
+        "table": "usuario"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"usuario_usuario_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "usuario_usuario_key",
+          "public",
+          "\"public\".\"usuario\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"usuario_usuario_key\"",
+        "sql": "ALTER TABLE \"public\".\"usuario\" ADD CONSTRAINT \"usuario_usuario_key\" UNIQUE (\"usuario\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"usuario_usuario_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "usuario_usuario_key",
+          "public",
+          "\"public\".\"usuario\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.sesion.sesion_usuarioId_idx_5f01c7d6",
+    "label": "Create index \"sesion_usuarioId_idx_5f01c7d6\" on \"sesion\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "sesion_usuarioId_idx_5f01c7d6",
+        "table": "sesion"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"sesion_usuarioId_idx_5f01c7d6\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"sesion_usuarioId_idx_5f01c7d6\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"sesion_usuarioId_idx_5f01c7d6\"",
+        "sql": "CREATE INDEX \"sesion_usuarioId_idx_5f01c7d6\" ON \"public\".\"sesion\" (\"usuarioId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"sesion_usuarioId_idx_5f01c7d6\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"sesion_usuarioId_idx_5f01c7d6\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.sesion.sesion_usuarioId_fkey",
+    "label": "Add foreign key \"sesion_usuarioId_fkey\" on \"sesion\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "sesion_usuarioId_fkey",
+        "table": "sesion"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"sesion_usuarioId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "sesion_usuarioId_fkey",
+          "public",
+          "\"public\".\"sesion\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"sesion_usuarioId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"sesion\"\nADD CONSTRAINT \"sesion_usuarioId_fkey\"\nFOREIGN KEY (\"usuarioId\")\nREFERENCES \"public\".\"usuario\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"sesion_usuarioId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "sesion_usuarioId_fkey",
+          "public",
+          "\"public\".\"sesion\""
+        ]
+      }
+    ]
+  }
+]

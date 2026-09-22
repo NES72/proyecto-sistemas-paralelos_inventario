@@ -1,10 +1,10 @@
-# Sistema de Gestión de Inventario
+# FerroStock — Sistema de Gestión de Inventario
 
 ## Descripción
 
 Proyecto académico desarrollado para implementar un entorno de desarrollo basado en una arquitectura de servicios independientes, utilizando contenedores Docker, PostgreSQL y Prisma ORM.
 
-El sistema corresponde a una aplicación de gestión de inventario, preparada para trabajar con un backend, un frontend y una base de datos PostgreSQL ejecutados mediante Docker Compose.
+El proyecto corresponde a una aplicación de gestión de inventario para una ferretería, preparada para trabajar con un backend, un frontend y una base de datos PostgreSQL ejecutados mediante Docker Compose.
 
 ## Arquitectura
 
@@ -67,15 +67,20 @@ proyecto-sistemas-paralelos/
 │
 ├── backend/
 │   ├── lib/db.js                       Único punto de acceso a Prisma 8 (ORM)
-│   ├── middleware/                     Validación de entrada y manejo de errores
+│   ├── middleware/                     Validación, autenticación y manejo de errores
+│   │   ├── auth.js                     requireAuth / requireAdmin (sesiones por token)
 │   │   ├── errorHandler.js
 │   │   └── validate.js
 │   ├── routes/                         Endpoints REST
+│   │   ├── auth.js                     Login, logout, me y gestión de usuarios
 │   │   ├── categorias.js
 │   │   ├── productos.js
 │   │   └── movimientos.js
 │   ├── services/
 │   │   └── inventarioService.js        Lógica de negocio (reglas de stock)
+│   ├── lib/
+│   │   ├── db.js                       Único punto de acceso a Prisma 8 (ORM)
+│   │   └── security.js                 Hash de contraseñas (scrypt) y tokens
 │   ├── prisma/
 │   │   ├── contract.prisma             Esquema (fuente de verdad de la BD)
 │   │   ├── contract.json               Contrato emitido (usa el runtime)
@@ -95,13 +100,14 @@ proyecto-sistemas-paralelos/
 │   ├── package.json
 │   └── src/
 │       ├── main.jsx                    Montaje de React
-│       ├── App.jsx                     Router + navegación
+│       ├── App.jsx                     Router + navegación + rutas protegidas
 │       ├── index.css
-│       ├── pages/                      Categorias, Productos, Movimientos
-│       └── services/api.js             Cliente HTTP del backend
+│       ├── pages/                      Login, Usuarios, Categorias, Productos, Movimientos
+│       └── services/
+│           ├── api.js                  Cliente HTTP del backend (adjunta token)
+│           └── auth.js                 Sesión en localStorage (token + usuario)
 │
 ├── docker-compose.yml
-├── oc.md
 ├── README.md
 └── .gitignore
 ```
@@ -118,7 +124,27 @@ El proyecto utiliza tres contenedores principales:
 
 ## API REST
 
-El backend expone los siguientes endpoints bajo `http://localhost:3000/api` (el frontend accede a través del proxy `/api` en `localhost:5173`):
+El backend expone los siguientes endpoints bajo `http://localhost:3000/api` (el frontend accede a través del proxy `/api` en `localhost:5173`).
+
+Todas las rutas de gestión (`/categorias`, `/productos`, `/movimientos` y `/auth/usuarios`) requieren el encabezado `Authorization: Bearer <token>`, obtenido previamente en el login.
+
+### Autenticación
+
+| Método | Ruta                  | Descripción                                    | Acceso    |
+| ------ | --------------------- | ---------------------------------------------- | --------- |
+| POST   | `/api/auth/login`       | Inicia sesión y devuelve `token` + `usuario`  | Público   |
+| POST   | `/api/auth/logout`      | Cierra la sesión activa                       | Autenticado |
+| GET    | `/api/auth/me`          | Devuelve el usuario de la sesión activa       | Autenticado |
+| GET    | `/api/auth/usuarios`    | Lista los usuarios del sistema                | Admin     |
+| POST   | `/api/auth/usuarios`    | Crea un usuario (`nombre`, `usuario`, `password`, `rol`) | Admin |
+| POST   | `/api/auth/cambiar-password` | Cambia la propia contraseña (`passwordActual`, `nuevaPassword`) | Autenticado |
+
+El usuario por defecto creado por el seed es:
+
+```text
+usuario: admin
+password: admin2026
+```
 
 ### Categorías
 
@@ -144,7 +170,7 @@ El backend expone los siguientes endpoints bajo `http://localhost:3000/api` (el 
 
 | Método | Ruta                    | Descripción                                             |
 | ------ | ----------------------- | ------------------------------------------------------- |
-| GET    | `/api/movimientos`        | Lista todos los movimientos                            |
+| GET    | `/api/movimientos`        | Lista todos los movimientos (opcional `?productoId=` para filtrar por producto) |
 | GET    | `/api/movimientos/:id`    | Obtiene un movimiento por id                            |
 | POST   | `/api/movimientos`        | Registra un movimiento (`ENTRADA`, `SALIDA` o `AJUSTE`) |
 
@@ -154,6 +180,7 @@ El backend expone los siguientes endpoints bajo `http://localhost:3000/api` (el 
 - `SALIDA`: rechazada si la cantidad supera el stock disponible (`Stock insuficiente`).
 - `AJUSTE`: requiere `motivo` y fija el stock al valor indicado.
 - Nunca se permite stock negativo.
+- Acceso restringido por sesión (token). Solo los administradores pueden eliminar categorías/productos y gestionar usuarios.
 
 ## Base de datos
 
@@ -168,20 +195,24 @@ El esquema de inventario contempla las siguientes entidades principales:
 * **Categoria**
 * **Producto**
 * **MovimientoInventario**
+* **Usuario**
+* **Sesion**
 
-También se utiliza el enumerado `TipoMovimiento` para representar:
+También se utilizan los enumerados:
 
-* `ENTRADA`
-* `SALIDA`
-* `AJUSTE`
+* `TipoMovimiento`: `ENTRADA`, `SALIDA`, `AJUSTE`.
+* `Rol`: `ADMINISTRADOR`, `OPERADOR`.
+
+Las contraseñas se guardan únicamente como hash (scrypt) y las sesiones por token se almacenan en la tabla `Sesion` con expiración (24 h).
 
 ### Datos iniciales
 
-El script de seed incorpora datos iniciales para probar el sistema:
+El script de seed incorpora datos de ejemplo orientados a una ferretería:
 
-* 3 categorías.
-* 5 productos.
-* 5 movimientos de inventario.
+* 3 categorías: Herramientas Manuales, Fijaciones y Tornilleria, Material Electrico.
+* 5 productos: Martillo de Uña, Destornillador Plano, Llave Ajustable, Tornillos, Cinta Aislante.
+* 5 movimientos de inventario (ENTRADA de carga inicial).
+* 1 usuario administrador (`admin` / `admin2026`).
 
 El seed fue diseñado para poder ejecutarse nuevamente sin generar registros duplicados.
 
@@ -274,7 +305,11 @@ feat(db): migrar esquema a postgresql y ejecutar script de seed
 Actualmente se encuentra configurado un entorno funcional de desarrollo compuesto por:
 
 * Backend Node.js + Express (API REST completa, ESM).
-* Frontend React + Vite funcional (listado/CRUD de categorías, productos y movimientos).
+* Autenticación por sesión: login/logout, rutas protegidas y roles Admin/Operador.
+* Frontend React + Vite funcional (listado/CRUD de categorías, productos y movimientos; páginas de login, usuarios y cambio de contraseña).
+* Búsqueda y filtros de productos por código/nombre y categoría, etiquetas de "Sin stock"/"Stock bajo" con filtro "Solo stock bajo", ficha de producto con historial de movimientos y valor, y valor total del inventario (precio × stock).
+* Código sugerido (FER-####) al registrar productos; el stock inicial declarado se registra automáticamente como movimiento ENTRADA.
+* Activación/desactivación de productos (solo administrador).
 * PostgreSQL.
 * Prisma ORM con contrato y migraciones versionadas.
 * Docker Compose.
