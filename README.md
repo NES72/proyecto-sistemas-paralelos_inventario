@@ -105,7 +105,8 @@ proyecto-sistemas-paralelos/
 │       ├── pages/                      Login, Usuarios, Categorias, Productos, Movimientos
 │       └── services/
 │           ├── api.js                  Cliente HTTP del backend (adjunta token)
-│           └── auth.js                 Sesión en localStorage (token + usuario)
+│           ├── auth.js                 Sesión en localStorage (token + usuario)
+│           └── AuthContext.jsx         Estado de sesión reactivo (login/logout)
 │
 ├── docker-compose.yml
 ├── README.md
@@ -298,6 +299,8 @@ chore(agente): incorporar skills y reglas de arquitectura del proyecto
 feat(docker): configurar entorno multi-contenedor con docker-compose
 fix(backend): adaptar seed al runtime de prisma 8
 feat(db): migrar esquema a postgresql y ejecutar script de seed
+chore(proyecto): eliminar referencias a syslab y limpiar configuración
+feat(ferrostock): autenticacion por sesiones, roles y mejoras en gestion de productos
 ```
 
 ## Estado del proyecto
@@ -305,7 +308,7 @@ feat(db): migrar esquema a postgresql y ejecutar script de seed
 Actualmente se encuentra configurado un entorno funcional de desarrollo compuesto por:
 
 * Backend Node.js + Express (API REST completa, ESM).
-* Autenticación por sesión: login/logout, rutas protegidas y roles Admin/Operador.
+* Autenticación por sesión: login/logout, rutas protegidas, roles Admin/Operador, gestión de usuarios y cambio de contraseña.
 * Frontend React + Vite funcional (listado/CRUD de categorías, productos y movimientos; páginas de login, usuarios y cambio de contraseña).
 * Búsqueda y filtros de productos por código/nombre y categoría, etiquetas de "Sin stock"/"Stock bajo" con filtro "Solo stock bajo", ficha de producto con historial de movimientos y valor, y valor total del inventario (precio × stock).
 * Código sugerido (FER-####) al registrar productos; el stock inicial declarado se registra automáticamente como movimiento ENTRADA.
